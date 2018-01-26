@@ -54,6 +54,23 @@ class Target():
         res = requests.get('https://www.instagram.com/graphql/query/?query_id=17888483320059182&variables={"id":"%s","first":%s}'%(uid,num), cookies = cookie)
         ret = json.loads(res.text)
         return ret
+    def getTypeName(self,shortCode):
+        f = File()
+        textList = []
+        ret = ""
+        res = requests.get('https://www.instagram.com/p/%s/?__a=1'%(shortCode), cookies = cookie)
+        data = json.loads(res.text)
+        typeName = data['graphql']['shortcode_media']['__typename']
+        if typeName == "GraphSidecar":
+            for d in data['graphql']['shortcode_media'].get('edge_sidecar_to_children').get('edges'):
+                if d.get('node').get('is_video') == True:
+                    ret = 'GraphSidecarVedio'
+                    return ret
+            ret = 'GraphSidecarImage'
+                
+        else:
+            ret = typeName
+        return ret
     def getShortCode(self):
         data = self.getList(100)['data']['user']['edge_owner_to_timeline_media']['edges']
         shortCodeList = []
@@ -63,7 +80,11 @@ class Target():
             f = File()
             f.creatFolder(self.account+'/'+data[i]['node']['shortcode'])
             f.download(data[i]['node']['display_url'],self.account+'/'+data[i]['node']['shortcode']+'/'+ data[i]['node']['shortcode'] +'.jpg')
+            lt = []
+            f.writeText(lt,self.account+'/'+data[i]['node']['shortcode']+'/'+self.getTypeName(data[i]['node']['shortcode']) + '.txt')
         return shortCodeList
+
+            
     def getCommentCount(self,shortCode):
         while True:    
             res = requests.get('https://www.instagram.com/graphql/query/?query_id=17852405266163336&variables={"shortcode":"%s","first":0}'%(shortCode),cookies = cookie)
@@ -139,4 +160,6 @@ def main():
     target = Target(t)
     target.getComments2()
     ht.logout()
+    #target = Target("ann20023300")
+    #print target.getTypeName('BXfclpaBO2m')
 main()

@@ -61,13 +61,25 @@ class Target():
         res = requests.get('https://www.instagram.com/p/%s/?__a=1'%(shortCode), cookies = cookie)
         data = json.loads(res.text)
         typeName = data['graphql']['shortcode_media']['__typename']
+        isViedo = False
+        isImage = False
         if typeName == "GraphSidecar":
             for d in data['graphql']['shortcode_media'].get('edge_sidecar_to_children').get('edges'):
                 if d.get('node').get('is_video') == True:
-                    ret = 'GraphSidecarVedio'
-                    return ret
-            ret = 'GraphSidecarImage'
-                
+                    #ret = 'GraphSidecarVedio'
+                    isViedo = True
+                else:
+                    #ret = 'GraphSidecarVedio+Image'
+                    isImage = True
+            #ret = 'GraphSidecarImage'
+            if isViedo and isImage:
+                ret = 'GraphSidecarVedio+Image'
+            elif isViedo:
+                ret = 'GraphSidecarVedio'
+            elif isImage:
+                ret = 'GraphSidecarImage'
+            else:
+                ret = 'noType'
         else:
             ret = typeName
         return ret
